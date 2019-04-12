@@ -154,7 +154,7 @@ def parse_realigned_bam_graphEH(file_name, repeat_id_list=[], repeat_graphs=None
         repeat_id = read.get_tag('XG').split(',')[0]
         offset = int(read.get_tag('XG').split(',')[1])
         graph_cigar = read.get_tag('XG').split(',')[2]
-        if repeat_id not in repeat_id_list:
+        if len(repeat_id_list) > 0 and repeat_id not in repeat_id_list:
             continue
         read_seq = read.query_sequence
         read_qual = read.query_qualities
