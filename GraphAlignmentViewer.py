@@ -550,6 +550,8 @@ def get_args():
     """
     parser = argparse.ArgumentParser(
         description="Create a pileup of read alignments from ExpansionHunter")
+    parser.add_argument("--variant_catalog", dest='variant_catalog', type=str,
+                        help="Path to variant catalog json file used to run EH (default: \"variant_catalog.json\")", required=True)
     read_align_group = parser.add_mutually_exclusive_group(required=True)
     read_align_group.add_argument(
         "--read_align", dest='read_align_file', type=str, help="Read alignment log file from EH output")
@@ -559,8 +561,6 @@ def get_args():
                         help=" (Optional) VCF file from EH to display GT predicted in output image", default=None)
     parser.add_argument("--file_format", dest='file_format', type=str,
                         help="Format of read alignments from EH. [\"v3\": BAM(default), \"v2.5\": YAML]", default="v3")
-    parser.add_argument("--variant_catalog", dest='variant_catalog', type=str,
-                        help="Path to variant catalog json file used to run EH (default: \"variant_catalog.json\")", default='variant_catalog.json')
     parser.add_argument("--greyscale", action="store_true",
                         help="Show nucleotides in greyscale: high quality match - black, low quality match - grey, mismatch - red (Default IGV color scheme)")
     parser.add_argument("--locus_id", dest='locus_id',
