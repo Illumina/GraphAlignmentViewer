@@ -7,9 +7,9 @@ Visualize the pileup of read alignments to a STR locus (or any path in the seque
 ## Usage:
 `python3 GraphAlignmentViewer.py --help`
 ### Use case 1: Single sample
-`python3 GraphAlignmentViewer.py --read_align READ_ALIGN_FILE [--vcf VCF_FILE]`
+`python3 GraphAlignmentViewer.py --variant_catalog VARIANT_CATALOG --read_align READ_ALIGN_FILE [--vcf VCF_FILE]`
 ### Use case 2: Comparison of genotypes from multiple samples
-`python3 GraphAlignmentViewer.py --read_align_list READ_ALIGN_FILE_LIST`
+`python3 GraphAlignmentViewer.py --variant_catalog VARIANT_CATALOG --read_align_list READ_ALIGN_FILE_LIST`
 ## Requirements:
 * Python3
 * Matplotlib
@@ -17,7 +17,8 @@ Visualize the pileup of read alignments to a STR locus (or any path in the seque
 * Numpy
 * PyYAML (if visualizing output from versions older than v3)
 ## Inputs:
-
+### Common inputs:
+1. `VARIANT_CATALOG`: Path to variant catalog JSON file used to run ExpansionHunter
 ### Use case 1: Single sample
 1. `READ_ALIGN_FILE`: Read alignment file generated be ExpansionHunter. BAM for v3, YAML for v2.5.
 2. `VCF_FILE`: VCF output of genotype calls from ExpansionHunter
@@ -35,7 +36,6 @@ The pileups for the samples are shown in the order reported in the input file.
 | Option | Argument | Default | Description |
 |:--:|:--:|:--:|:--|
 |`--file_format` | `FILE_FORMAT` | `v3` | Format of read alignments from EH. [`v3`: BAM, `v2.5`: YAML] |
-|`--variant_catalog` | `VARIANT_CATALOG` | `variant_catalog.json` | Path to variant catalog json file used to run EH |
 |`--locus_id` | `LOCUS_ID` | Plot pileups for all loci | Comma-separated list of locus IDs for which to plot pileup |
 |`--greyscale` | `-`      | Nucleotides colored in IGV color scheme | Show nucleotides in greyscale: high quality match - black, low quality match - grey, mismatch - red |
 |`--show_read_names` | `-` | Do not display read names | Display read names next to the read alignment |
