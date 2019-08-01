@@ -194,6 +194,10 @@ def get_repeat_path(read_alignments, reference_graph):
                 node_count[int(node[0])] += 1
             for node_id in node_count:
                 max_node_count[node_id] = max(max_node_count[node_id], node_count[node_id])
+    if max_node_count[reference_graph[0].node_id] == 0:
+        max_node_count[reference_graph[0].node_id] = 1
+    if max_node_count[reference_graph[-1].node_id] == 0:
+        max_node_count[reference_graph[-1].node_id] = 1
     node_id_list = []
     for node in reference_graph:
         node_id_list += [node.node_id] * max_node_count[node.node_id]
