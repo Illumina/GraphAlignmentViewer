@@ -563,11 +563,8 @@ def get_args():
         "--read_align", dest='read_align_file', type=str, help="Read alignment log file from EH output")
     read_align_group.add_argument(
         "--read_align_list", dest='read_align_file_list', type=str, help="CSV file with paths to EH output for multiple samples. Column1: Sample name, Column2: Read alignment file from EH, Column 3(optional) VCF file")
-    gt_input_group = parser.add_mutually_exclusive_group()
-    gt_input_group.add_argument("--vcf", dest='vcf_file', type=str,
-                                help=" (Optional) VCF output file from EH to display GT predicted in output image")
-    gt_input_group.add_argument("--json", dest='json_file', type=str,
-                                help=" (Optional) JSON output file from EH to display GT predicted in output image")
+    parser.add_argument("--gt_file", dest='gt_file', type=str,
+                                help=" (Optional) Output file (VCF or JSON) from EH to display GT predicted in output image")
     parser.add_argument("--file_format", dest='file_format', type=str,
                         help="Format of read alignments from EH. [\"v3\": BAM(default), \"v2.5\": YAML]", default="v3")
     parser.add_argument("--greyscale", action="store_true",
@@ -612,10 +609,8 @@ def get_sample_filepaths(args):
     if args.read_align_file is not None:
         sample_name = os.path.splitext(
             os.path.basename(args.read_align_file))[0]
-        if args.vcf_file is not None:
-            sample_list = [(sample_name, args.read_align_file, args.vcf_file)]
-        elif args.json_file is not None:
-            sample_list = [(sample_name, args.read_align_file, args.json_file)]
+        if args.gt_file is not None:
+            sample_list = [(sample_name, args.read_align_file, args.gt_file)]
         else:
             sample_list = [(sample_name, args.read_align_file, None)]
         output_prefix = sample_name
