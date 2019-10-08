@@ -152,10 +152,10 @@ def parse_realigned_bam_graphEH(file_name, repeat_id_list=[], repeat_graphs=None
     read_aligns = defaultdict(lambda: [], {})
     for read in y.fetch(until_eof=True):
         repeat_id = read.get_tag('XG').split(',')[0]
-        offset = int(read.get_tag('XG').split(',')[1])
-        graph_cigar = read.get_tag('XG').split(',')[2]
         if len(repeat_id_list) > 0 and repeat_id not in repeat_id_list:
             continue
+        offset = int(read.get_tag('XG').split(',')[1])
+        graph_cigar = read.get_tag('XG').split(',')[2]
         read_seq = read.query_sequence
         read_qual = read.query_qualities
         ref_seq = repeat_graphs[repeat_id].get_graph_cigar_seq(graph_cigar, offset)
@@ -381,7 +381,7 @@ def get_pileup_list(all_sample_read_aligns, sample_names, reference_graph, node_
     return pileup_list
 
 
-def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=False, output_prefix='', title_suffix='', show_read_names=False, show_insertions=False, flank_clip_size=-1):
+def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=False, output_prefix='', title_suffix='', show_read_names=False, show_insertions=False, flank_clip_size=-1, dpi=100, pdf=False):
     """Plot read pileups for all samples for give repeat_id
     Args:
         repeat_id: Repeat ID for which to plot pileup
@@ -544,8 +544,10 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
         ax.axhline(ypos + 0.5, linestyle='--', c='0.5')
     if show_read_names:
         ax.axvline(xmax + 1, color='k')
-    fig.savefig(output_prefix + '.png')
-    fig.savefig(output_prefix + '.pdf')
+    if pdf: 
+        fig.savefig(output_prefix + '.pdf')
+    else:
+        fig.savefig(output_prefix + '.png', dpi=dpi)
     plt.close(fig)
 
 
@@ -561,8 +563,11 @@ def get_args():
         "--read_align", dest='read_align_file', type=str, help="Read alignment log file from EH output")
     read_align_group.add_argument(
         "--read_align_list", dest='read_align_file_list', type=str, help="CSV file with paths to EH output for multiple samples. Column1: Sample name, Column2: Read alignment file from EH, Column 3(optional) VCF file")
-    parser.add_argument("--vcf", dest='vcf_file', type=str,
-                        help=" (Optional) VCF file from EH to display GT predicted in output image", default=None)
+    gt_input_group = parser.add_mutually_exclusive_group()
+    gt_input_group.add_argument("--vcf", dest='vcf_file', type=str,
+                                help=" (Optional) VCF output file from EH to display GT predicted in output image")
+    gt_input_group.add_argument("--json", dest='json_file', type=str,
+                                help=" (Optional) JSON output file from EH to display GT predicted in output image")
     parser.add_argument("--file_format", dest='file_format', type=str,
                         help="Format of read alignments from EH. [\"v3\": BAM(default), \"v2.5\": YAML]", default="v3")
     parser.add_argument("--greyscale", action="store_true",
@@ -584,7 +589,12 @@ def get_args():
     parser.add_argument("--region_extension_length", dest="flank_size", type=int,
                         help="Size of nodes flanking the locus used for generating the read alignments. Default: 1000", default=1000)
     parser.add_argument("--region_extension_clip_length", dest="flank_clip_size", type=int,
-                        help = "Number of basepairs of flanking regions to display. `-1`: Infer from maximum span of reads overlapping the locus. (default 20)", default=20)
+                        help="Number of basepairs of flanking regions to display. `-1`: Infer from maximum span of reads overlapping the locus. (default 20)", default=20)
+    graphics_format_group = parser.add_mutually_exclusive_group()
+    graphics_format_group.add_argument("--dpi", dest='dpi', type=int,
+                                help=" (Optional) Resolution of output PNG image. Default: 100", default=100)
+    graphics_format_group.add_argument("--pdf", dest='pdf', action='store_true',
+                                help=" (Optional) Output PDF image instead of PNG")
     
     return parser.parse_args()
 
@@ -600,11 +610,14 @@ def get_sample_filepaths(args):
     # output_prefix: prefix of final output images
     # Populate sample_list and output_prefix
     if args.read_align_file is not None:
-        if args.vcf_file is None:
-            raise("EH vcf output not provided")
         sample_name = os.path.splitext(
             os.path.basename(args.read_align_file))[0]
-        sample_list = [(sample_name, args.read_align_file, args.vcf_file)]
+        if args.vcf_file is not None:
+            sample_list = [(sample_name, args.read_align_file, args.vcf_file)]
+        elif args.json_file is not None:
+            sample_list = [(sample_name, args.read_align_file, args.json_file)]
+        else:
+            sample_list = [(sample_name, args.read_align_file, None)]
         output_prefix = sample_name
     else:
         in_root = os.path.dirname(args.read_align_file_list)
@@ -699,16 +712,34 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
                     sample_genotypes[l[1]].append((l[2], [int(gt) for gt in l[3].split('/')]))
         elif file_format in ['vcf', 'v3', 'v2.5', 'v3.0.0-rc1']:
             sample_genotypes = defaultdict(lambda: [-1, -1], {})
-            for l in open(sample[2]):
-                ll = l.strip().split()
-                if len(ll) == 0 or ll[0][0] == '#':
-                    continue
-                site = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REPID']
-                refgt = int({f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REF'])
-                gtlist = [refgt] + [int(f.strip('<>STR')) for f in ll[4].split(',') if f != '.']
-                genotype = [gtlist[int(g)] for g in {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}['GT'].split('/')]
-                genotype.sort()
-                sample_genotypes[site] = genotype
+            if os.path.splitext(sample[2])[1] == '.vcf':
+                for l in open(sample[2]):
+                    ll = l.strip().split()
+                    if len(ll) == 0 or ll[0][0] == '#':
+                        continue
+                    site = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REPID']
+                    refgt = int({f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REF'])
+                    gtlist = [refgt] + [int(f.strip('<>STR')) for f in ll[4].split(',') if f != '.']
+                    genotype = [gtlist[int(g)] for g in {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}['GT'].split('/')]
+                    genotype.sort()
+                    sample_genotypes[site] = genotype
+            else:
+                sample_genotypes = defaultdict(lambda: [-1, -1], {})
+                if file_format in ['v3', 'v3.0.0-rc1']:
+                    eh_json = json.load(open(sample[2]))["LocusResults"]
+                    for locus_id in eh_json.keys():
+                        if 'Variants' not in eh_json[locus_id]:
+                            continue
+                        for variant_id in eh_json[locus_id]["Variants"].keys():
+                            if 'Genotype' not in eh_json[locus_id]["Variants"][variant_id]:
+                                continue
+                            sample_genotypes[variant_id] = eh_json[locus_id]["Variants"][variant_id]['Genotype']
+                else:
+                    eh_json = json.load(open(sample[2]))
+                    sample_genotypes = {repeat_id: eh_json[repeat_id]['Genotype']
+                                        for repeat_id in eh_json if repeat_id != 'BamStats'}   
+                sample_genotypes = {repeat_id: [int(g) for g in sample_genotypes[repeat_id].split(
+                    '/') if g != ''] for repeat_id in sample_genotypes}    
         genotypes[sample[0]] = sample_genotypes
     return genotypes
 
@@ -748,10 +779,10 @@ def main():
                                       [s[0] for s in sample_list], repeat_graphs[repeat_id],
                                       node_grouping_list=node_grouping_list, show_insertions=args.show_insertions)
         if prefix_flag and len(site_list) == 1:
-            plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id], args.greyscale, output_prefix, args.title_suffix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size)
+            plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id], args.greyscale, output_prefix, args.title_suffix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
         else:
             plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id],
-                        args.greyscale, output_prefix + "_" + repeat_id, args.title_suffix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size)
+                        args.greyscale, output_prefix + "_" + repeat_id, args.title_suffix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
 
 
 if __name__ == '__main__':
