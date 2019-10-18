@@ -381,7 +381,7 @@ def get_pileup_list(all_sample_read_aligns, sample_names, reference_graph, node_
     return pileup_list
 
 
-def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=False, output_prefix='', title_suffix='', show_read_names=False, show_insertions=False, flank_clip_size=-1, dpi=100, pdf=False):
+def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=False, output_name='', title_prefix='', show_read_names=False, show_insertions=False, flank_clip_size=-1, dpi=100, pdf=False):
     """Plot read pileups for all samples for give repeat_id
     Args:
         repeat_id: Repeat ID for which to plot pileup
@@ -390,7 +390,7 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
         reference_graph: ReferenceGraph for locus
         greyscale: (optional): Set True for greyscale scheme. Default: color(IGV scheme).
         output_prefix: (optional) Default ''
-        title_suffix: String to be added as a suffix to the title
+        title_prefix: String to be added as a prefix to the title
         show_read_names: Show names of reads alongside the read
         show_insertions: Boolean to show full sequence of insertions
     Outputs:
@@ -409,7 +409,8 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
         xoffset = repeat_path.get_alignment_coordinates('N', reference_graph, '%s[1M]' % reference_graph[0].node_id, offset=len(reference_graph[0].seq) - flank_clip_size, show_insertions=show_insertions)[0][0]
         xmax = repeat_path.get_alignment_coordinates('N', reference_graph, '%s[1M]' % reference_graph[-1].node_id, offset=flank_clip_size, show_insertions=show_insertions)[0][0]
     if show_read_names:
-        xlen = xmax + 50 - xoffset
+        read_name_max = max([len(alignment_pileup[0].query_name) for site_pileup in pileup_list for alignment_pileup in site_pileup[2]] + [len("Reference")])
+        xlen = xmax + read_name_max - xoffset
     else:
         xlen = xmax - xoffset
     ylen = 0 
@@ -423,7 +424,10 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
     margin = 0.5
     fig = plt.figure(figsize=(xlen * xscale + 2 *
                                 margin,  ylen * yscale + 2 * margin))
-    fig.suptitle("%s - LocusId:%s - LocusStructure:%s %s" % (os.path.basename(output_prefix), repeat_id, reference_graph.locus_structure, title_suffix), fontsize=4 * fontsize, y=1 - margin / (ylen * yscale + 2 * margin), va='bottom')
+    if title_prefix == "":
+        fig.suptitle("%s:%s" % (repeat_id, reference_graph.locus_structure), fontsize=4 * fontsize, y=1 - margin / (ylen * yscale + 2 * margin), va='bottom')
+    else:
+        fig.suptitle("%s %s:%s" % (title_prefix, repeat_id, reference_graph.locus_structure), fontsize=4 * fontsize, y=1 - margin / (ylen * yscale + 2 * margin), va='bottom')
     ax = fig.add_axes([margin / (xlen * xscale + 1), margin / (ylen * yscale + 1),
                        xlen * xscale / (xlen * xscale + 2 * margin), ylen * yscale / (ylen * yscale + 2 * margin)])
     ax.set_xlim(xoffset, xoffset + xlen)
@@ -453,10 +457,11 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
         if gtnone:
             sample_str = site_pileup[0]
         else:
-            sample_str = site_pileup[0] + ' - Genotypes predicted - ' + '; '.join(gt_list)
-        ax.text((xoffset + xmax) / 2, ypos + 3, sample_str, ha='center',
+            sample_str = site_pileup[0] + ' (Prediction - ' + '; '.join(gt_list) + ')'
+        ax.text((xoffset + xoffset + xlen) / 2, ypos + 3, sample_str, ha='center',
                 va='bottom', fontsize=3 * fontsize)
         ypos += 3
+        sample_start = ypos
         previous_genotype = None
         for alignment_pileup in site_pileup[2]:
             if alignment_pileup[2] != previous_genotype:
@@ -485,6 +490,8 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
                         c = basepair_color[position[1].upper()]
                         ax.text(position[0]+ 0.5, ypos + 1, position[1], ha='center',
                                 va='center', fontsize=fontsize, weight='bold', color=c)
+                if show_read_names:
+                    ax.text(xmax + 2, ypos + 1, "Reference", color='k', ha='left', va='center')
                 previous_genotype = alignment_pileup[2]
                 
                 
@@ -542,12 +549,13 @@ def plot_pileup(repeat_id, pileup_list, genotypes, reference_graph, greyscale=Fa
             read_parity = 1 - read_parity
             ypos += 1
         ax.axhline(ypos + 0.5, linestyle='--', c='0.5')
-    if show_read_names:
-        ax.axvline(xmax + 1, color='k')
+        if show_read_names:
+            ax.plot((xmax + 1, xmax + 1), (sample_start + 0.5, ypos + 0.5), color='k')
+            # ax.axvline(xmax + 1, color='k')
     if pdf: 
-        fig.savefig(output_prefix + '.pdf')
+        fig.savefig(output_name + '.pdf')
     else:
-        fig.savefig(output_prefix + '.png', dpi=dpi)
+        fig.savefig(output_name + '.png', dpi=dpi)
     plt.close(fig)
 
 
@@ -572,13 +580,15 @@ def get_args():
     parser.add_argument("--locus_id", dest='locus_id',
                         type=str, help="Comma-separated locus IDs for which to plot pileup. Default: All repeats", default="")
     parser.add_argument("--output_prefix", dest='output_prefix',
-                        type=str, help="Prefix of output file (default: <FILENAME>_<LOCUS_ID> where FILENAME is base filename of READ_ALIGN_FILE/READ_ALIGN_FILE_LIST)", default="")
-    parser.add_argument("--title_suffix", dest='title_suffix',
-                        type=str, help="Suffix text to be appended to title of the plot (default:\"\")", default="")
+                        type=str, help="Prefix of output file. Output filename(s) \"<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.png\"(\".pdf\") corresponding to the position of the first repeat unit in the node grouping. If node grouping is \"NONE\" or \"ALL\", then position corresponds to the first repeat unit in the locus. (default: No prefix. Output filename(s) \"<CHROM>-<START>-<REPEATUNIT>.alignment.png\"(\".pdf\"))", default="")
+    parser.add_argument("--output_dir", dest='output_dir',
+                        type=str, help="Output directory (default=Current working directory)", default="")
+    parser.add_argument("--title_prefix", dest='title_prefix',
+                        type=str, help="Prefix text to be appended to title of the plot (default:\"\")", default="")
     parser.add_argument("--reference_fasta", dest='reference_fasta',
                         type=str, help="Fasta file with .fai index for reference sequence. If not provided, flanks are set to 'N'. Default: None", default=None)
     parser.add_argument("--node_grouping", dest='node_grouping',
-                        type=str, help="Comma-separated list of node indices (left flank=0) to group and sort reads by genotype. \"NONE\": sort reads only by position, \"ALL\": group by all repeat nodes from left to right. (default: \"1\" group by leftmost repeat node)", default="1")
+                        type=str, help="Comma-separated list of node indices (left flank=0) to group and sort reads by genotype. \"NONE\": sort reads only by position, \"ALL\": group by all repeat nodes from left to right. (default: create a separate image for each repeat unit)", default="")
     parser.add_argument("--show_read_names", action="store_true",
                         help="Show names of reads")
     parser.add_argument("--show_insertions", action="store_true",
@@ -613,7 +623,7 @@ def get_sample_filepaths(args):
             sample_list = [(sample_name, args.read_align_file, args.gt_file)]
         else:
             sample_list = [(sample_name, args.read_align_file, None)]
-        output_prefix = sample_name
+        # output_prefix = sample_name
     else:
         in_root = os.path.dirname(args.read_align_file_list)
         for l in open(args.read_align_file_list):
@@ -626,14 +636,14 @@ def get_sample_filepaths(args):
             else:
                 sample_list.append((ll[0], os.path.join(
                     in_root, ll[1]), None))
-        output_prefix = os.path.splitext(
-            os.path.basename(args.read_align_file_list))[0]
-    if args.output_prefix != "":
-        output_prefix = args.output_prefix
-        prefix_flag = True
-    else:
-        prefix_flag = False
-    return (sample_list, output_prefix, prefix_flag)
+        # output_prefix = os.path.splitext(
+        #     os.path.basename(args.read_align_file_list))[0]
+    # if args.output_prefix != "":
+    #     output_prefix = args.output_prefix
+    #     prefix_flag = True
+    # else
+    #     prefix_flag = False
+    return (sample_list)#, output_prefix , prefix_flag)
 
 
 def populate_repeat_graphs(specs_path=None, specs_format='v3', reference_fasta=None, flank_size=1000, sample_list=None):
@@ -741,7 +751,11 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
 
 def main():
     args = get_args()
-    (sample_list, output_prefix, prefix_flag) = get_sample_filepaths(args)
+    sample_list = get_sample_filepaths(args)
+    if args.output_prefix == "":
+        output_prefix = ""
+    else:
+        output_prefix = args.output_prefix + '_'
     if args.reference_fasta is None:
         reference_fasta = None
     else:
@@ -764,20 +778,50 @@ def main():
             site_list.add(repeat_id)
 
     for repeat_id in site_list:
-        if args.node_grouping == 'NONE':
-            node_grouping_list = []
-        elif args.node_grouping == 'ALL':
-            node_grouping_list = None
+        if args.node_grouping != "":
+            if args.node_grouping == 'NONE':
+                node_grouping_list = []
+                output_name = ['%s%s-%s.alignment' % (output_prefix, n.reference_region.split('-')[0].replace(':', '-'), n.seq)
+                                 for n in repeat_graphs[repeat_id] if n.is_repeat][0]
+            elif args.node_grouping == 'ALL':
+                node_grouping_list = None
+                output_name = ['%s%s-%s.alignment' % (output_prefix, n.reference_region.split('-')[0].replace(':', '-'), n.seq)
+                                 for n in repeat_graphs[repeat_id] if n.is_repeat][0]
+            else:
+                node_grouping_list = [int(i) for i in args.node_grouping.split(',')]
+                for node_id in node_grouping_list:
+                    if not repeat_graphs[repeat_id][node_id].is_repeat:
+                        raise Exception("node id %s in --node_grouping is not a repeat unit" % node_id)
+                output_name = ['%s%s-%s.alignment' % (output_prefix, n.reference_region.split('-')[0].replace(':', '-'), n.seq)
+                                 for n in repeat_graphs[repeat_id] if n.node_id in node_grouping_list][0]
+            
+            if args.output_dir != "":
+                if not os.path.exists(args.output_dir):
+                    os.makedirs(args.output_dir)
+                output_name = os.path.join(args.output_dir, output_name)
+            pileup_list = get_pileup_list({s: all_sample_read_aligns[s][repeat_id] for s in all_sample_read_aligns},
+                                        [s[0] for s in sample_list], repeat_graphs[repeat_id],
+                                        node_grouping_list=node_grouping_list, show_insertions=args.show_insertions)
+            # if prefix_flag and len(site_list) == 1:
+            plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id], args.greyscale, output_name, args.title_prefix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
+            # else:
+            #     plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id],
+            #                 args.greyscale, output_prefix + "_" + repeat_id, args.title_prefix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
         else:
-            node_grouping_list = [int(i) for i in args.node_grouping.split(',')]
-        pileup_list = get_pileup_list({s: all_sample_read_aligns[s][repeat_id] for s in all_sample_read_aligns},
-                                      [s[0] for s in sample_list], repeat_graphs[repeat_id],
-                                      node_grouping_list=node_grouping_list, show_insertions=args.show_insertions)
-        if prefix_flag and len(site_list) == 1:
-            plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id], args.greyscale, output_prefix, args.title_suffix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
-        else:
-            plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id],
-                        args.greyscale, output_prefix + "_" + repeat_id, args.title_suffix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
+            for n in repeat_graphs[repeat_id]:
+                if not n.is_repeat:
+                    continue
+                node_grouping_list = [n.node_id]
+                output_name = '%s%s-%s.alignment' % (output_prefix, n.reference_region.split('-')[0].replace(':', '-'), n.seq)
+                if args.output_dir != "":
+                    if not os.path.exists(args.output_dir):
+                        os.makedirs(args.output_dir)
+                    output_name = os.path.join(args.output_dir, output_name)
+                pileup_list = get_pileup_list({s: all_sample_read_aligns[s][repeat_id] for s in all_sample_read_aligns},
+                                            [s[0] for s in sample_list], repeat_graphs[repeat_id],
+                                            node_grouping_list=node_grouping_list, show_insertions=args.show_insertions)
+                plot_pileup(repeat_id, pileup_list, genotypes, repeat_graphs[repeat_id], args.greyscale, output_name, args.title_prefix, args.show_read_names, show_insertions=args.show_insertions, flank_clip_size=args.flank_clip_size, dpi=args.dpi, pdf=args.pdf)
+                
 
 
 if __name__ == '__main__':

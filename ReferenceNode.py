@@ -16,7 +16,7 @@ class ReferenceNode(object):
     '''
 
 
-    def __init__(self, node_id, seq, is_repeat, node_name=''):
+    def __init__(self, node_id, seq, is_repeat, node_name='', reference_region=""):
         '''
         Initialize ReferenceNode
         Arguments:
@@ -28,6 +28,7 @@ class ReferenceNode(object):
         self.seq = seq
         self.is_repeat = is_repeat
         self.node_name = node_name
+        self.reference_region = reference_region
 
 
     def get_cigar_seq(self, cigar, offset=0):
