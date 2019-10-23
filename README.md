@@ -44,10 +44,11 @@ The pileups for the samples are shown in the order reported in the input file.
 |`--greyscale` | `-`      | Nucleotides colored in IGV color scheme | Show nucleotides in greyscale: high quality match - black, low quality match - grey, mismatch - red |
 |`--show_read_names` | `-` | Do not display read names | Display read names next to the read alignment |
 |`--show_insertions` | `-` | Do not display inserted sequences | Display full sequences of insertions |
-|`--output_prefix` | `OUTPUT_PREFIX` | `<FILENAME>_<LOCUS_ID>` where filename is basename of `READ_ALIGN_FILE` or `READ_ALIGN_FILE_LIST` | Prefix of output file |
-|`--title_suffix` | `TITLE_SUFFIX` | "" | Suffix text to be appended to title of the plot |
+|`--output_prefix` | `OUTPUT_PREFIX` | No prefix. Output filename(s): `<CHROM>-<START>-<REPEATUNIT>.alignment.png`(`.pdf`) | Prefix of output file. Output filename(s): `<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.png`(`.pdf`) corresponding to the position of the first repeat unit in the node grouping. If node grouping is `NONE` or `ALL`, then position corresponds to the first repeat unit in the locus. |
+|`--output_dir` | `OUTPUT_DIR` | `Current working directory` | Output directory |
+|`--title_suffix` | `TITLE_PREFIX` | "" | Prefix text to be appended to title of the plot |
 |`--reference_fasta` | `REFERENCE_FASTA` | Represent flanks with 'N's | Indexed FASTA file for reference sequence |
-|`--node_grouping` | `NODE_GROUPING` | `1` (group by leftmost repeat node) | Comma-separated list of node indices (left flank=`0`) to group and sort reads by genotype. `NONE`: sort reads only by position, `ALL`: group by all repeat nodes from left to right. |
+|`--node_grouping` | `NODE_GROUPING` | Create a separate image for each repeat unit | Comma-separated list of node indices (left flank=`0`) to group and sort reads by genotype. `NONE`: sort reads only by position, `ALL`: group by all repeat nodes from left to right. |
 |`--region_extension_length` | `REGION_EXTENSION_LENGTH` (`INT`) | `1000` | Size of nodes flanking the region structure used for generating the read alignments |
 |`--region_extension_clip_length` | `REGION_EXTENSION_CLIP_LENGTH` (`INT`) | `20` | Number of basepairs of flanking regions to display. `-1`: Infer from maximum span of reads overlapping the locus. |
 | `--dpi` | `DPI` (`INT`) | `100` | Resolution of output PNG image |
@@ -57,12 +58,6 @@ The pileups for the samples are shown in the order reported in the input file.
 
 
 ## Outputs:
-The script produces 1 file per locus: `<OUTPUT_PREFIX>_<LOCUS_ID>.png`. If the `--pdf` flag is set then it produces the file `<OUTPUT_PREFIX>_<LOCUS_ID>.pdf` instead.
+The script produces 1 file per repeat unit or `NODE_GROUPING`: `<OUTPUT_DIR>/<CHROM>-<START>-<REPEATUNIT>.alignment.png`. If the `--pdf` flag is set then it produces the file `<OUTPUT_DIR>/<CHROM>-<START>-<REPEATUNIT>.alignment.pdf` instead.
 
-The output files are created in the current working directory unless `--output_prefix` argument is provided. Specifically:
-* If `--output_prefix OUTPUT_PREFIX` is set
-  * If `OUTPUT_PREFIX` is provided using the `--output_prefix` option then the output file will be produced in the current working directory with file name `<OUTPUT_PREFIX>_C9ORF72.png` or `.pdf`. Here `OUTPUT_PREFIX` may contain an absolute or relative path or only basename of the ouput files.
-* Use case 1: Single sample
-  * If `READ_ALIGN_FILE` is `<PARENT_DIRECTORY>/sample.bam` and `LOCUS_ID` is `C9ORF72`, then the output files will be produced in the current working directory with file names `<CURRENT_WORKING_DIRECTORY>/sample_C9ORF72.pdf` and `<CURRENT_WORKING_DIRECTORY>/sample_C9ORF72.png`.
-* Use case 2: Comparison of genotypes from multiple samples
-  * If `READ_ALIGN_FILE_LIST` is `<PARENT_DIRECTORY>/sample.csv` and `LOCUS_ID` is `C9ORF72`, then the output file will be produced in the current working directory with file name `<CURRENT_WORKING_DIRECTORY>/samplelist_C9ORF72.png` or `.pdf`.
+If the flag `--output_prefix` is set then the output file name is `<OUTPUT_DIR>/<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.png` or `<OUTPUT_DIR>/<OUTPUT_PREFIX><CHROM>-<START>-<REPEATUNIT>.alignment.pdf` 
