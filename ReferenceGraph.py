@@ -25,7 +25,13 @@ class ReferenceGraph(list):
         position_list = []
         self.flank_size = flank_size
         if 'TargetRegion' in repeat_spec:
-            self.target_region = repeat_spec["TargetRegion"]
+            if type(repeat_spec["TargetRegion"]) == str:
+                self.target_region = repeat_spec["TargetRegion"]
+                position_list = [repeat_spec["TargetRegion"]]
+            else:
+                self.target_region = (repeat_spec["TargetRegion"][0].split('-')[0]
+                                      + '-' + repeat_spec["TargetRegion"][-1].split('-')[1])
+                position_list = repeat_spec["TargetRegion"]
         elif 'ReferenceRegion' in repeat_spec:
             if type(repeat_spec["ReferenceRegion"]) == str:
                 self.target_region = repeat_spec["ReferenceRegion"]
@@ -69,7 +75,7 @@ class ReferenceGraph(list):
         else:
             self.repeat_id = [s for s in repeat_spec['RepeatIds'] if 'ignore' not in s][0]
             node_names = [s for s in repeat_spec['RepeatIds']]
-        self.chrom = self.target_region.split() if isinstance(self.target_region, list) else self.target_region.split(':')[0]
+        self.chrom = self.target_region.split(':')[0]
         self.start = int(self.target_region.split(':')[1].split('-')[0])
         self.end = int(self.target_region.split(':')[1].split('-')[1])
         node_id = 0

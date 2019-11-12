@@ -684,9 +684,12 @@ def populate_repeat_graphs(specs_path=None, specs_format='v3', reference_fasta=N
                 repeat_id = specs_json['LocusId']
             else:
                 repeat_id = [s for s in specs_json['RepeatIds'] if 'ignore' not in s][0]
-            repeat_graphs[repeat_id] = ReferenceGraph(specs_json,
-                                                       reference_fasta=reference_fasta,
-                                                       flank_size=flank_size)
+            refgraph = ReferenceGraph(specs_json,
+                                      reference_fasta=reference_fasta,
+                                      flank_size=flank_size)
+            if ('|') not in refgraph.repeat_unit:
+                continue
+            repeat_graphs[repeat_id] = refgraph
     return repeat_graphs
 
 
