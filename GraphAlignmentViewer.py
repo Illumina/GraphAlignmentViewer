@@ -687,7 +687,7 @@ def populate_repeat_graphs(specs_path=None, specs_format='v3', reference_fasta=N
             refgraph = ReferenceGraph(specs_json,
                                       reference_fasta=reference_fasta,
                                       flank_size=flank_size)
-            if ('|') not in refgraph.repeat_unit:
+            if ('|') in refgraph.repeat_unit:
                 continue
             repeat_graphs[repeat_id] = refgraph
     return repeat_graphs
