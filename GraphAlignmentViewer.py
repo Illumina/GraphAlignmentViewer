@@ -152,6 +152,8 @@ def parse_realigned_bam_graphEH(file_name, repeat_id_list=[], repeat_graphs=None
     read_aligns = defaultdict(lambda: [], {})
     for read in y.fetch(until_eof=True):
         repeat_id = read.get_tag('XG').split(',')[0]
+        if repeat_id not in repeat_graphs:
+            continue
         if len(repeat_id_list) > 0 and repeat_id not in repeat_id_list:
             continue
         offset = int(read.get_tag('XG').split(',')[1])
@@ -722,8 +724,20 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
                     ll = l.strip().split()
                     if len(ll) == 0 or ll[0][0] == '#':
                         continue
-                    site = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REPID']
-                    refgt = int({f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REF'])
+                    info_dict = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}
+                    if 'VARID' in info_dict:
+                        site = info_dict['VARID']
+                    elif 'REPID' in info_dict:
+                        site = info_dict['REPID']
+                    else:
+                        continue
+                    if 'REF' in info_dict:
+                        try:
+                            refgt = int(info_dict['REF'])
+                        except:
+                            continue
+                    else:
+                        continue
                     gtlist = [refgt] + [int(f.strip('<>STR')) for f in ll[4].split(',') if f != '.']
                     genotype = [gtlist[int(g)] for g in {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}['GT'].split('/')]
                     genotype.sort()
