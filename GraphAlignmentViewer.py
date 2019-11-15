@@ -725,10 +725,26 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
                     ll = l.strip().split()
                     if len(ll) == 0 or ll[0][0] == '#':
                         continue
-                    site = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REPID']
-                    refgt = int({f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}['REF'])
+                    info_dict = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}
+                    if 'VARID' in info_dict:
+                        site = ['VARID']
+                    elif 'REPID' in info_dict:
+                        site = ['REPID']
+                    else:
+                        continue
+                    if 'REF' in info_dict:
+                        try:
+                            refgt = int(info_dict['REF'])
+                        except:
+                            continue
+                    else:
+                        continue
                     gtlist = [refgt] + [int(f.strip('<>STR')) for f in ll[4].split(',') if f != '.']
-                    genotype = [gtlist[int(g)] for g in {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}['GT'].split('/')]
+                    feature_dict = {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}
+                    if 'GT' in feature_dict:
+                        genotype = [gtlist[int(g)] for g in feature_dict['GT'].split('/')]
+                    else:
+                        continue
                     genotype.sort()
                     sample_genotypes[site] = genotype
             else:
