@@ -60,4 +60,4 @@ The pileups for the samples are shown in the order reported in the input file.
 ## Outputs:
 The script produces 1 file per repeat unit or `NODE_GROUPING`: `<OUTPUT_DIR>/<CHROM>-<START>-<REPEATUNIT>.alignment.png`. If the `--pdf` flag is set then it produces the file `<OUTPUT_DIR>/<CHROM>-<START>-<REPEATUNIT>.alignment.pdf` instead.
 
-If the flag `--output_prefix` is set then the output file name is `<OUTPUT_DIR>/<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.png` or `<OUTPUT_DIR>/<OUTPUT_PREFIX><CHROM>-<START>-<REPEATUNIT>.alignment.pdf` 
+If the flag `--output_prefix` is set then the output file name is `<OUTPUT_DIR>/<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.png` or `<OUTPUT_DIR>/<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.pdf` 

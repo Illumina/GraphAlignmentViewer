@@ -686,9 +686,12 @@ def populate_repeat_graphs(specs_path=None, specs_format='v3', reference_fasta=N
                 repeat_id = specs_json['LocusId']
             else:
                 repeat_id = [s for s in specs_json['RepeatIds'] if 'ignore' not in s][0]
-            repeat_graphs[repeat_id] = ReferenceGraph(specs_json,
-                                                       reference_fasta=reference_fasta,
-                                                       flank_size=flank_size)
+            refgraph = ReferenceGraph(specs_json,
+                                      reference_fasta=reference_fasta,
+                                      flank_size=flank_size)
+            if ('|') in refgraph.repeat_unit:
+                continue
+            repeat_graphs[repeat_id] = refgraph
     return repeat_graphs
 
 
@@ -739,7 +742,11 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
                     else:
                         continue
                     gtlist = [refgt] + [int(f.strip('<>STR')) for f in ll[4].split(',') if f != '.']
-                    genotype = [gtlist[int(g)] for g in {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}['GT'].split('/')]
+                    feature_dict = {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}
+                    if 'GT' in feature_dict:
+                        genotype = [gtlist[int(g)] for g in feature_dict['GT'].split('/')]
+                    else:
+                        continue
                     genotype.sort()
                     sample_genotypes[site] = genotype
             else:
