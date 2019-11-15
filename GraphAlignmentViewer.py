@@ -152,6 +152,8 @@ def parse_realigned_bam_graphEH(file_name, repeat_id_list=[], repeat_graphs=None
     read_aligns = defaultdict(lambda: [], {})
     for read in y.fetch(until_eof=True):
         repeat_id = read.get_tag('XG').split(',')[0]
+        if repeat_id not in repeat_graphs:
+            continue
         if len(repeat_id_list) > 0 and repeat_id not in repeat_id_list:
             continue
         offset = int(read.get_tag('XG').split(',')[1])
@@ -727,9 +729,9 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
                         continue
                     info_dict = {f.split('=')[0]:f.split('=')[1] for f in ll[7].split(';')}
                     if 'VARID' in info_dict:
-                        site = ['VARID']
+                        site = info_dict['VARID']
                     elif 'REPID' in info_dict:
-                        site = ['REPID']
+                        site = info_dict['REPID']
                     else:
                         continue
                     if 'REF' in info_dict:
