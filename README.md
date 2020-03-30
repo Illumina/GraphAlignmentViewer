@@ -54,7 +54,7 @@ The pileups for the samples are shown in the order reported in the input file.
 |`--show_insertions` | `-` | Do not display inserted sequences | Display full sequences of insertions |
 |`--output_prefix` | `OUTPUT_PREFIX` | No prefix. Output filename(s): `<CHROM>-<START>-<REPEATUNIT>.alignment.png`(`.pdf`) | Prefix of output file. Output filename(s): `<OUTPUT_PREFIX>_<CHROM>-<START>-<REPEATUNIT>.alignment.png`(`.pdf`) corresponding to the position of the first repeat unit in the node grouping. If node grouping is `NONE` or `ALL`, then position corresponds to the first repeat unit in the locus. |
 |`--output_dir` | `OUTPUT_DIR` | `Current working directory` | Output directory |
-|`--title_suffix` | `TITLE_PREFIX` | "" | Prefix text to be appended to title of the plot |
+|`--title_prefix` | `TITLE_PREFIX` | "" | Prefix text to be appended to title of the plot |
 |`--reference_fasta` | `REFERENCE_FASTA` | Represent flanks with 'N's | Indexed FASTA file for reference sequence |
 |`--node_grouping` | `NODE_GROUPING` | Create a separate image for each repeat unit | Comma-separated list of node indices (left flank=`0`) to group and sort reads by genotype. `NONE`: sort reads only by position, `ALL`: group by all repeat nodes from left to right. |
 |`--region_extension_length` | `REGION_EXTENSION_LENGTH` (`INT`) | `1000` | Size of nodes flanking the region structure used for generating the read alignments |
