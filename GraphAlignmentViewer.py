@@ -744,7 +744,7 @@ def get_EH_genotypes(sample_list, file_format='vcf'):
                     gtlist = [refgt] + [int(f.strip('<>STR')) for f in ll[4].split(',') if f != '.']
                     feature_dict = {f[0]:f[1] for f in zip(ll[8].split(':'), ll[9].split(':'))}
                     if 'GT' in feature_dict:
-                        genotype = [gtlist[int(g)] for g in feature_dict['GT'].split('/')]
+                        genotype = [gtlist[0] if g == '.' else gtlist[int(g)] for g in feature_dict['GT'].split('/')]
                     else:
                         continue
                     genotype.sort()
