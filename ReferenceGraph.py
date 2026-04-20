@@ -4,8 +4,26 @@ Created on Jun 1, 2018
 @author: vdeshpande
 '''
 import re
+import copy
 from ReferenceNode import ReferenceNode
 import seq_util
+
+def clean_region_id(region):
+    sep_idx = region.find(":")
+    return region[0:sep_idx+1] + region[sep_idx+1:].replace(":", "-")
+
+def clean_repeat_spec(repeat_spec):
+    repeat_spec = copy.deepcopy(repeat_spec)
+    for key in ["TargetRegion", "ReferenceRegion"]:
+        if key not in repeat_spec:
+            continue
+        region = repeat_spec[key]
+        if isinstance(region, str):
+            repeat_spec[key] = clean_region_id(region)
+        else:
+            repeat_spec[key] = [clean_region_id(s) for s in region]
+    return repeat_spec
+
 
 class ReferenceGraph(list):
     '''
@@ -21,6 +39,7 @@ class ReferenceGraph(list):
            reference_fasta: Reference FASTA file
            flank_size: Size of flanking sequences to append to locus. 
         '''
+        repeat_spec = clean_repeat_spec(repeat_spec)
         list.__init__(self)
         position_list = []
         self.flank_size = flank_size
