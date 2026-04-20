@@ -1,5 +1,6 @@
 # GraphAlignmentViewer:
 Visualize the pileup of read alignments to a STR locus (or any path in the sequence graph) for one or more samples.
+GraphAlignmentViewer source code is provided under the [PolyForm Strict License 1.0.0. ](https://github.com/Illumina/GraphAlignmentViewer/blob/master/LICENSE)
 ## Description:
   Genotyping STR loci is a difficult problem due to multiple reasons including flanks with similar genomic sequences, difficulty in aligning reads sequencing errors and sample contamination. ExpansionHunter is a tool that can automatically predict the genotypes of STR loci based on read alignments. However, due to the difficult nature of the problem, there may be errors in the predicted genotype. GraphAlignmentViewer, is a standalone Python3 script that creates a visualization of all read alignments to an STR locus to enable visual inspection of the genotype predictions made by ExpansionHunter. The script can visualize one or more samples, including trios to compare genotype calls in multiple samples. For each sample the script requires genotypes predicted by ExpansionHunter in BAM format for EH version 3 or YAML format for EH version 2.5.
 
